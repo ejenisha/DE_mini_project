@@ -191,7 +191,7 @@
 											"path": "$['id']"
 										},
 										"sink": {
-											"name": "id",
+											"name": "Id",
 											"type": "String"
 										}
 									},
@@ -443,7 +443,7 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "DS_MongodbtoJsonExpenses",
+								"referenceName": "DS_MongodbToJsonUsers",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -465,7 +465,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_MongoDbAtlasUsers')]",
 				"[concat(variables('factoryId'), '/datasets/DS_MongodbToJsonUsers')]",
-				"[concat(variables('factoryId'), '/datasets/DS_MongodbtoJsonExpenses')]",
 				"[concat(variables('factoryId'), '/datasets/DS_jsonToDb')]"
 			]
 		},
@@ -523,6 +522,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
+						"fileName": "users",
 						"container": "cr-de-miniproject"
 					}
 				},
@@ -568,7 +568,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": "users",
+						"fileName": "Expenses",
 						"container": "cr-de-miniproject"
 					}
 				},
@@ -605,7 +605,7 @@
 				],
 				"typeProperties": {
 					"schema": "staging",
-					"table": "user"
+					"table": "expenses"
 				}
 			},
 			"dependsOn": [
@@ -661,6 +661,247 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DL_DataCleaning')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "Users",
+							"description": "Importing Users data from db"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "Expenses",
+							"description": "Importing Expenses data from db"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "CleanedData",
+							"description": "LoadingCleanedUserDataIntoSqlDb"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "CleanedExpenseData",
+							"description": "Loading the cleaned expenses into db"
+						}
+					],
+					"transformations": [
+						{
+							"name": "RemovingEmptyRecords",
+							"description": "Removing Users whose id and email is null"
+						},
+						{
+							"name": "IdentifyingRedundantRows",
+							"description": "Removing Duplicate Users"
+						},
+						{
+							"name": "RemovingRedundantRows",
+							"description": "Removing the Repeated Users"
+						},
+						{
+							"name": "SelectingTheRequiredColumns",
+							"description": "selecting only the needed fields"
+						},
+						{
+							"name": "ChangingToAppropriateDataType",
+							"description": "Cast columns to appropriate types"
+						},
+						{
+							"name": "RemovingNullRecords",
+							"description": "Removing Expenses which does not have user id"
+						},
+						{
+							"name": "FindingRedundantRows",
+							"description": "Removing Duplicate Expenses"
+						},
+						{
+							"name": "RemovingDuplicateRows",
+							"description": "Removing Redundant Data"
+						},
+						{
+							"name": "SelectingNeededFields",
+							"description": "Selecting Only the Required Fields"
+						},
+						{
+							"name": "ChangingTheDataType"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          id as string,",
+						"          Email as string,",
+						"          Password as string,",
+						"          Balance as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'staging',",
+						"     tableName: 'user',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> Users",
+						"source(output(",
+						"          Id as string,",
+						"          userId as string,",
+						"          Category as string,",
+						"          Date as string,",
+						"          Description as string,",
+						"          Price as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'staging',",
+						"     tableName: 'expenses',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> Expenses",
+						"Users filter(!isNull(id)&&!isNull(Email)&&!isNull(Password)) ~> RemovingEmptyRecords",
+						"RemovingEmptyRecords window(over(id),",
+						"     asc(id, true),",
+						"     Rnk = rowNumber()) ~> IdentifyingRedundantRows",
+						"IdentifyingRedundantRows filter(Rnk==1) ~> RemovingRedundantRows",
+						"RemovingRedundantRows select(mapColumn(",
+						"          id,",
+						"          Email,",
+						"          Password,",
+						"          Balance",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingTheRequiredColumns",
+						"SelectingTheRequiredColumns cast(output(",
+						"          id as string,",
+						"          Email as string,",
+						"          Password as string,",
+						"          Balance as integer",
+						"     ),",
+						"     errors: true) ~> ChangingToAppropriateDataType",
+						"Expenses filter(!isNull(userId)) ~> RemovingNullRecords",
+						"RemovingNullRecords window(over(Id),",
+						"     asc(Id, true),",
+						"     Rnk = rowNumber()) ~> FindingRedundantRows",
+						"FindingRedundantRows filter(Rnk==1) ~> RemovingDuplicateRows",
+						"RemovingDuplicateRows select(mapColumn(",
+						"          Id,",
+						"          userId,",
+						"          Category,",
+						"          Date,",
+						"          Description,",
+						"          Price",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingNeededFields",
+						"SelectingNeededFields cast(output(",
+						"          Id as string,",
+						"          userId as string,",
+						"          Category as string,",
+						"          Date as string,",
+						"          Description as string,",
+						"          Price as integer",
+						"     ),",
+						"     errors: true) ~> ChangingTheDataType",
+						"ChangingToAppropriateDataType sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'User',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedData",
+						"ChangingTheDataType sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'expenses',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedExpenseData"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_jsonToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Staging To Prep')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Move Data From Stage To Prep",
+						"description": "Moving data from staging to prep layer",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DL_DataCleaning",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Users": {},
+									"Expenses": {},
+									"CleanedData": {},
+									"CleanedExpenseData": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DL_DataCleaning')]"
+			]
 		}
 	]
 }
