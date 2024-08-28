@@ -1,5 +1,5 @@
 {
-	"name": "DS_MongodbtoJSON",
+	"name": "DS_MongodbtoJsonExpenses",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "LS_MongodbtoJSON",
@@ -10,7 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": "data_c196a8d5-db6c-414f-b5f0-cfc0e7635928_6ff0b4c5-fff6-4c82-bc21-cd74a2d5d932.json",
+				"fileName": "users",
 				"container": "cr-de-miniproject"
 			}
 		},

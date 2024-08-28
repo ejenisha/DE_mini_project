@@ -1,9 +1,10 @@
 {
-	"name": "pipeline1",
+	"name": "PL_Users",
 	"properties": {
 		"activities": [
 			{
-				"name": "Mongodb to Json users",
+				"name": "Moving Users json data from MongoDb to Blob",
+				"description": "storing users data in blob",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -76,6 +77,102 @@
 				"outputs": [
 					{
 						"referenceName": "DS_MongodbToJsonUsers",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Moving Users json data to Sql Db",
+				"description": "storing uses data from blob to db",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Moving Users json data from MongoDb to Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['id']"
+								},
+								"sink": {
+									"name": "id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Email']"
+								},
+								"sink": {
+									"name": "Email",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Password']"
+								},
+								"sink": {
+									"name": "Password",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Balance']"
+								},
+								"sink": {
+									"name": "Balance",
+									"type": "String"
+								}
+							}
+						],
+						"mapComplexValuesToString": true
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_MongodbtoJsonExpenses",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_jsonToDb",
 						"type": "DatasetReference"
 					}
 				]

@@ -23,7 +23,7 @@
 		],
 		"typeProperties": {
 			"schema": "staging",
-			"table": "expense"
+			"table": "user"
 		}
 	}
 }

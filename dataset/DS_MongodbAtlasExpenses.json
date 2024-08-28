@@ -1,5 +1,5 @@
 {
-	"name": "DS_MongodbAtlas",
+	"name": "DS_MongodbAtlasExpenses",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "LS_MongodbAtlas",

@@ -1,9 +1,9 @@
 {
-	"name": "PL_MongoDb to Json",
+	"name": "PL_Expenses",
 	"properties": {
 		"activities": [
 			{
-				"name": "Mongodb to Json",
+				"name": "Moving Expense Data from MongoDb to blob",
 				"description": "Importing the Json data from MongoDb",
 				"type": "Copy",
 				"dependsOn": [],
@@ -86,23 +86,24 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "DS_MongodbAtlas",
+						"referenceName": "DS_MongodbAtlasExpenses",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "DS_MongodbtoJSON",
+						"referenceName": "DS_MongodbtoJsonExpenses",
 						"type": "DatasetReference"
 					}
 				]
 			},
 			{
-				"name": "Js To Sqldb",
+				"name": "Moving Expenses Json from Blob to SqlDb",
+				"description": "moving expenses data to db",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Mongodb to Json",
+						"activity": "Moving Expense Data from MongoDb to blob",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -199,7 +200,7 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "DS_MongodbtoJSON",
+						"referenceName": "DS_MongodbtoJsonExpenses",
 						"type": "DatasetReference"
 					}
 				],
