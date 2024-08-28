@@ -10,6 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
+				"fileName": "data_2d90ffda-838e-411e-88c4-287b339abaa6_747e6abe-afb0-492e-81a8-d6b5f1d971e1.json",
 				"container": "cr-de-miniproject"
 			}
 		},

@@ -98,7 +98,7 @@
 				]
 			},
 			{
-				"name": "Js",
+				"name": "Js To Sqldb",
 				"type": "Copy",
 				"dependsOn": [
 					{
@@ -117,8 +117,25 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
 					"enableStaging": false
-				}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_MongodbtoJSON",
+						"type": "DatasetReference"
+					}
+				]
 			}
 		],
 		"annotations": []
