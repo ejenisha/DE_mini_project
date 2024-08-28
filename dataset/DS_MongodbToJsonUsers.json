@@ -1,0 +1,40 @@
+{
+	"name": "DS_MongodbToJsonUsers",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_MongodbtoJSON",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "cr-de-miniproject"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"userId": {
+					"type": "string"
+				},
+				"Category": {
+					"type": "string"
+				},
+				"Date": {
+					"type": "string"
+				},
+				"Description": {
+					"type": "string"
+				},
+				"Price": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}

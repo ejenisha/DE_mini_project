@@ -1,0 +1,15 @@
+{
+	"name": "DS_MongoDbAtlasUsers",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_MongodbAtlas",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "MongoDbAtlasCollection",
+		"schema": [],
+		"typeProperties": {
+			"collection": "users"
+		}
+	}
+}
