@@ -1,0 +1,666 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "df-assesment-001"
+		},
+		"LS_MongodbAtlas_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_MongodbAtlas'"
+		},
+		"LS_MongodbtoJSON_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_MongodbtoJSON'"
+		},
+		"LS_jsonToDb_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LS_jsonToDb'"
+		},
+		"LS_MongodbAtlas_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "test"
+		},
+		"LS_jsonToDb_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "jman-training.database.windows.net"
+		},
+		"LS_jsonToDb_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sqldb-jmanTraining"
+		},
+		"LS_jsonToDb_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "jenisha"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Expenses')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Moving Expense Data from MongoDb to blob",
+						"description": "Importing the Json data from MongoDb",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "MongoDbAtlasSource",
+								"batchSize": 100
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['_id']['$oid']"
+										},
+										"sink": {
+											"path": "id"
+										}
+									},
+									{
+										"source": {
+											"path": "$['userId']"
+										},
+										"sink": {
+											"path": "userId"
+										}
+									},
+									{
+										"source": {
+											"path": "$['category']"
+										},
+										"sink": {
+											"path": "Category"
+										}
+									},
+									{
+										"source": {
+											"path": "$['date']"
+										},
+										"sink": {
+											"path": "Date"
+										}
+									},
+									{
+										"source": {
+											"path": "$['description']"
+										},
+										"sink": {
+											"path": "Description"
+										}
+									},
+									{
+										"source": {
+											"path": "$['amount']['$numberInt']"
+										},
+										"sink": {
+											"path": "Price"
+										}
+									}
+								]
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_MongodbAtlasExpenses",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_MongodbtoJsonExpenses",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Moving Expenses Json from Blob to SqlDb",
+						"description": "moving expenses data to db",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Moving Expense Data from MongoDb to blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['id']"
+										},
+										"sink": {
+											"name": "id",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['userId']"
+										},
+										"sink": {
+											"name": "userId",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Category']"
+										},
+										"sink": {
+											"name": "Category",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Date']"
+										},
+										"sink": {
+											"name": "Date",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Description']"
+										},
+										"sink": {
+											"name": "Description",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Price']"
+										},
+										"sink": {
+											"name": "Price",
+											"type": "String"
+										}
+									}
+								],
+								"mapComplexValuesToString": true
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_MongodbtoJsonExpenses",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_jsonToDb",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_MongodbAtlasExpenses')]",
+				"[concat(variables('factoryId'), '/datasets/DS_MongodbtoJsonExpenses')]",
+				"[concat(variables('factoryId'), '/datasets/DS_jsonToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Users')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Moving Users json data from MongoDb to Blob",
+						"description": "storing users data in blob",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "MongoDbAtlasSource",
+								"batchSize": 100
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['_id']['$oid']"
+										},
+										"sink": {
+											"path": "id"
+										}
+									},
+									{
+										"source": {
+											"path": "$['email']"
+										},
+										"sink": {
+											"path": "Email"
+										}
+									},
+									{
+										"source": {
+											"path": "$['password']"
+										},
+										"sink": {
+											"path": "Password"
+										}
+									},
+									{
+										"source": {
+											"path": "$['balance']['$numberInt']"
+										},
+										"sink": {
+											"path": "Balance"
+										}
+									}
+								]
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_MongoDbAtlasUsers",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_MongodbToJsonUsers",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Moving Users json data to Sql Db",
+						"description": "storing uses data from blob to db",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Moving Users json data from MongoDb to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['id']"
+										},
+										"sink": {
+											"name": "id",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Email']"
+										},
+										"sink": {
+											"name": "Email",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Password']"
+										},
+										"sink": {
+											"name": "Password",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Balance']"
+										},
+										"sink": {
+											"name": "Balance",
+											"type": "String"
+										}
+									}
+								],
+								"mapComplexValuesToString": true
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_MongodbtoJsonExpenses",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_jsonToDb",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_MongoDbAtlasUsers')]",
+				"[concat(variables('factoryId'), '/datasets/DS_MongodbToJsonUsers')]",
+				"[concat(variables('factoryId'), '/datasets/DS_MongodbtoJsonExpenses')]",
+				"[concat(variables('factoryId'), '/datasets/DS_jsonToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_MongoDbAtlasUsers')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_MongodbAtlas",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "MongoDbAtlasCollection",
+				"schema": [],
+				"typeProperties": {
+					"collection": "users"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_MongodbAtlas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_MongodbAtlasExpenses')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_MongodbAtlas",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "MongoDbAtlasCollection",
+				"schema": [],
+				"typeProperties": {
+					"collection": "expenses"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_MongodbAtlas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_MongodbToJsonUsers')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_MongodbtoJSON",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "cr-de-miniproject"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"id": {
+							"type": "string"
+						},
+						"userId": {
+							"type": "string"
+						},
+						"Category": {
+							"type": "string"
+						},
+						"Date": {
+							"type": "string"
+						},
+						"Description": {
+							"type": "string"
+						},
+						"Price": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_MongodbtoJSON')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_MongodbtoJsonExpenses')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_MongodbtoJSON",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "users",
+						"container": "cr-de-miniproject"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_MongodbtoJSON')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_jsonToDb')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_jsonToDb",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "userId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "category",
+						"type": "nvarchar"
+					},
+					{
+						"name": "description",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "staging",
+					"table": "user"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_jsonToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_MongodbAtlas')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "MongoDbAtlas",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_MongodbAtlas_connectionString')]",
+					"database": "[parameters('LS_MongodbAtlas_properties_typeProperties_database')]",
+					"driverVersion": "v2"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_MongodbtoJSON')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_MongodbtoJSON_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_jsonToDb')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('LS_jsonToDb_properties_typeProperties_server')]",
+					"database": "[parameters('LS_jsonToDb_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('LS_jsonToDb_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('LS_jsonToDb_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
