@@ -1,0 +1,29 @@
+{
+	"name": "DS_jsonToDb",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_jsonToDb",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "userId",
+				"type": "nvarchar"
+			},
+			{
+				"name": "category",
+				"type": "nvarchar"
+			},
+			{
+				"name": "description",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "staging",
+			"table": "expense"
+		}
+	}
+}

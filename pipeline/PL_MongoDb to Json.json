@@ -38,28 +38,28 @@
 									"path": "$['_id']['$oid']"
 								},
 								"sink": {
-									"path": "S.No"
+									"path": "id"
 								}
 							},
 							{
 								"source": {
-									"path": "$['userId']['$oid']"
+									"path": "$['userId']"
 								},
 								"sink": {
-									"path": "UserId"
+									"path": "userId"
 								}
 							},
 							{
 								"source": {
-									"path": "$['categories']"
+									"path": "$['category']"
 								},
 								"sink": {
-									"path": "Categories"
+									"path": "Category"
 								}
 							},
 							{
 								"source": {
-									"path": "$['date']['$date']['$numberLong']"
+									"path": "$['date']"
 								},
 								"sink": {
 									"path": "Date"
@@ -128,11 +128,84 @@
 							"type": "JsonReadSettings"
 						}
 					},
-					"enableStaging": false
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['id']"
+								},
+								"sink": {
+									"name": "id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['userId']"
+								},
+								"sink": {
+									"name": "userId",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Category']"
+								},
+								"sink": {
+									"name": "Category",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Date']"
+								},
+								"sink": {
+									"name": "Date",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Description']"
+								},
+								"sink": {
+									"name": "Description",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Price']"
+								},
+								"sink": {
+									"name": "Price",
+									"type": "String"
+								}
+							}
+						],
+						"mapComplexValuesToString": true
+					}
 				},
 				"inputs": [
 					{
 						"referenceName": "DS_MongodbtoJSON",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_jsonToDb",
 						"type": "DatasetReference"
 					}
 				]
