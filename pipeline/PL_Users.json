@@ -166,7 +166,7 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "DS_MongodbtoJsonExpenses",
+						"referenceName": "DS_MongodbToJsonUsers",
 						"type": "DatasetReference"
 					}
 				],
