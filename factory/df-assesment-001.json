@@ -1,0 +1,9 @@
+{
+	"name": "df-assesment-001",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "37158b06-0585-41de-aa14-1ae0ae2c9761",
+		"tenantId": "2800c0a0-70e9-49be-8733-faeaa6aced99"
+	}
+}
