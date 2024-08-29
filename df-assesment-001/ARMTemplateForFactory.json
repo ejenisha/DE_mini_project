@@ -272,6 +272,55 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/PL_Staging To Prep')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Move Data From Stage To Prep",
+						"description": "Moving data from staging to prep layer",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DL_DataCleaning",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Users": {},
+									"Expenses": {},
+									"CleanedData": {},
+									"CleanedExpenseData": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DL_DataCleaning')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/PL_Users')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -855,14 +904,221 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/PL_Staging To Prep')]",
+			"name": "[concat(parameters('factoryName'), '/DF_Fact And Dim')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "FactExpense",
+							"description": "Deriving the Fact Table"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "UserSourceTable",
+							"description": "User Table"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "ExpenseTable",
+							"description": "Creating fact table"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "UserDimTable",
+							"description": "storing the user dim table in db"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "CategoryDim",
+							"description": "creating the category dimension table"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "FactExpenseTable"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SelectingFactTableFields",
+							"description": "Selecting the require fields"
+						},
+						{
+							"name": "CreatingUserDimTable"
+						},
+						{
+							"name": "SelectingTheRequiredFields",
+							"description": "selecting the needed fields for user dim table"
+						},
+						{
+							"name": "CalcualtingTotalAmountForEachCategory"
+						},
+						{
+							"name": "FilteringRecordsWithNoCategory",
+							"description": "Removing records with category as null"
+						},
+						{
+							"name": "RenamingColumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          Id as string,",
+						"          userId as string,",
+						"          Category as string,",
+						"          Date as string,",
+						"          Description as string,",
+						"          Price as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'expenses',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> FactExpense",
+						"source(output(",
+						"          id as string,",
+						"          Email as string,",
+						"          Password as string,",
+						"          Balance as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'User',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> UserSourceTable",
+						"source(output(",
+						"          Id as string,",
+						"          userId as string,",
+						"          Category as string,",
+						"          Date as string,",
+						"          Description as string,",
+						"          Price as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'expenses',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> ExpenseTable",
+						"FactExpense select(mapColumn(",
+						"          ExpenseId = Id,",
+						"          userId,",
+						"          Category,",
+						"          Date,",
+						"          Description,",
+						"          Price",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingFactTableFields",
+						"UserSourceTable, SelectingFactTableFields lookup(id == userId,",
+						"     multiple: false,",
+						"     pickup: 'any',",
+						"     broadcast: 'auto')~> CreatingUserDimTable",
+						"CreatingUserDimTable select(mapColumn(",
+						"          id,",
+						"          Email,",
+						"          Balance",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingTheRequiredFields",
+						"FilteringRecordsWithNoCategory aggregate(groupBy(Category),",
+						"     TotalAmount = sum(Price)) ~> CalcualtingTotalAmountForEachCategory",
+						"SelectingFactTableFields filter(!isNull(Category)) ~> FilteringRecordsWithNoCategory",
+						"ExpenseTable select(mapColumn(",
+						"          ExpenseId = Id,",
+						"          userId,",
+						"          Category,",
+						"          Date,",
+						"          Description,",
+						"          Price",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> RenamingColumns",
+						"SelectingTheRequiredFields sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'reporting',",
+						"     tableName: 'UserDim',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> UserDimTable",
+						"CalcualtingTotalAmountForEachCategory sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'reporting',",
+						"     tableName: 'CategoryDim',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CategoryDim",
+						"RenamingColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'reporting',",
+						"     tableName: 'ExpenseFact',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> FactExpenseTable"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_jsonToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Reporting')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "Move Data From Stage To Prep",
-						"description": "Moving data from staging to prep layer",
+						"name": "DL_Prep To Reporting",
 						"type": "ExecuteDataFlow",
 						"dependsOn": [],
 						"policy": {
@@ -875,14 +1131,16 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "DL_DataCleaning",
+								"referenceName": "DF_Fact And Dim",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
-									"Users": {},
-									"Expenses": {},
-									"CleanedData": {},
-									"CleanedExpenseData": {}
+									"FactExpense": {},
+									"UserSourceTable": {},
+									"ExpenseTable": {},
+									"UserDimTable": {},
+									"CategoryDim": {},
+									"FactExpenseTable": {}
 								}
 							},
 							"staging": {},
@@ -900,7 +1158,7 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/DL_DataCleaning')]"
+				"[concat(variables('factoryId'), '/dataflows/DF_Fact And Dim')]"
 			]
 		}
 	]
