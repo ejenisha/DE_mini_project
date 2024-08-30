@@ -14,6 +14,12 @@
 		"LS_jsonToDb_password": {
 			"value": ""
 		},
+		"LS_ScrappedData_connectionString": {
+			"value": ""
+		},
+		"LS_BlobToDb_password": {
+			"value": ""
+		},
 		"LS_MongodbAtlas_properties_typeProperties_database": {
 			"value": "test"
 		},
@@ -24,6 +30,15 @@
 			"value": "sqldb-jmanTraining"
 		},
 		"LS_jsonToDb_properties_typeProperties_userName": {
+			"value": "jenisha"
+		},
+		"LS_BlobToDb_properties_typeProperties_server": {
+			"value": "jman-training.database.windows.net"
+		},
+		"LS_BlobToDb_properties_typeProperties_database": {
+			"value": "sqldb-jmanTraining"
+		},
+		"LS_BlobToDb_properties_typeProperties_userName": {
 			"value": "jenisha"
 		},
 		"containerUri": {

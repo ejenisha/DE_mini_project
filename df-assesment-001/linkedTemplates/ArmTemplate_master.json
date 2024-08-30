@@ -19,6 +19,14 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'LS_jsonToDb'"
 		},
+		"LS_ScrappedData_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_ScrappedData'"
+		},
+		"LS_BlobToDb_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LS_BlobToDb'"
+		},
 		"LS_MongodbAtlas_properties_typeProperties_database": {
 			"type": "string",
 			"defaultValue": "test"
@@ -32,6 +40,18 @@
 			"defaultValue": "sqldb-jmanTraining"
 		},
 		"LS_jsonToDb_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "jenisha"
+		},
+		"LS_BlobToDb_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "jman-training.database.windows.net"
+		},
+		"LS_BlobToDb_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sqldb-jmanTraining"
+		},
+		"LS_BlobToDb_properties_typeProperties_userName": {
 			"type": "string",
 			"defaultValue": "jenisha"
 		},
@@ -71,6 +91,12 @@
 					"LS_jsonToDb_password": {
 						"value": "[parameters('LS_jsonToDb_password')]"
 					},
+					"LS_ScrappedData_connectionString": {
+						"value": "[parameters('LS_ScrappedData_connectionString')]"
+					},
+					"LS_BlobToDb_password": {
+						"value": "[parameters('LS_BlobToDb_password')]"
+					},
 					"LS_MongodbAtlas_properties_typeProperties_database": {
 						"value": "[parameters('LS_MongodbAtlas_properties_typeProperties_database')]"
 					},
@@ -82,10 +108,39 @@
 					},
 					"LS_jsonToDb_properties_typeProperties_userName": {
 						"value": "[parameters('LS_jsonToDb_properties_typeProperties_userName')]"
+					},
+					"LS_BlobToDb_properties_typeProperties_server": {
+						"value": "[parameters('LS_BlobToDb_properties_typeProperties_server')]"
+					},
+					"LS_BlobToDb_properties_typeProperties_database": {
+						"value": "[parameters('LS_BlobToDb_properties_typeProperties_database')]"
+					},
+					"LS_BlobToDb_properties_typeProperties_userName": {
+						"value": "[parameters('LS_BlobToDb_properties_typeProperties_userName')]"
 					}
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "df-assesment-001_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'df-assesment-001_ArmTemplate_0')]"
+			]
 		}
 	]
 }

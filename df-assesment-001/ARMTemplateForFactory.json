@@ -19,6 +19,14 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'LS_jsonToDb'"
 		},
+		"LS_ScrappedData_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_ScrappedData'"
+		},
+		"LS_BlobToDb_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LS_BlobToDb'"
+		},
 		"LS_MongodbAtlas_properties_typeProperties_database": {
 			"type": "string",
 			"defaultValue": "test"
@@ -32,6 +40,18 @@
 			"defaultValue": "sqldb-jmanTraining"
 		},
 		"LS_jsonToDb_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "jenisha"
+		},
+		"LS_BlobToDb_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "jman-training.database.windows.net"
+		},
+		"LS_BlobToDb_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sqldb-jmanTraining"
+		},
+		"LS_BlobToDb_properties_typeProperties_userName": {
 			"type": "string",
 			"defaultValue": "jenisha"
 		}
@@ -263,12 +283,68 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
+				"folder": {
+					"name": "Ass1"
+				},
 				"annotations": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_MongodbAtlasExpenses')]",
 				"[concat(variables('factoryId'), '/datasets/DS_MongodbtoJsonExpenses')]",
 				"[concat(variables('factoryId'), '/datasets/DS_jsonToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Reporting')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "DL_Prep To Reporting",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Fact And Dim",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"FactExpense": {},
+									"UserSourceTable": {},
+									"ExpenseTable": {},
+									"UserDimTable": {},
+									"CategoryDim": {},
+									"FactExpenseTable": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Ass1"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_Fact And Dim')]"
 			]
 		},
 		{
@@ -292,7 +368,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "DL_DataCleaning",
+								"referenceName": "DF_DataCleaning",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
@@ -314,10 +390,13 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
+				"folder": {
+					"name": "Ass1"
+				},
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/DL_DataCleaning')]"
+				"[concat(variables('factoryId'), '/dataflows/DF_DataCleaning')]"
 			]
 		},
 		{
@@ -509,6 +588,9 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
+				"folder": {
+					"name": "Ass1"
+				},
 				"annotations": []
 			},
 			"dependsOn": [
@@ -525,6 +607,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_MongodbAtlas",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Ass1"
 				},
 				"annotations": [],
 				"type": "MongoDbAtlasCollection",
@@ -546,6 +631,9 @@
 					"referenceName": "LS_MongodbAtlas",
 					"type": "LinkedServiceReference"
 				},
+				"folder": {
+					"name": "Ass1"
+				},
 				"annotations": [],
 				"type": "MongoDbAtlasCollection",
 				"schema": [],
@@ -565,6 +653,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_MongodbtoJSON",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Ass1"
 				},
 				"annotations": [],
 				"type": "Json",
@@ -612,6 +703,9 @@
 					"referenceName": "LS_MongodbtoJSON",
 					"type": "LinkedServiceReference"
 				},
+				"folder": {
+					"name": "Ass1"
+				},
 				"annotations": [],
 				"type": "Json",
 				"typeProperties": {
@@ -635,6 +729,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_jsonToDb",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Ass1"
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
@@ -712,202 +809,13 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DL_DataCleaning')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"linkedService": {
-								"referenceName": "LS_jsonToDb",
-								"type": "LinkedServiceReference"
-							},
-							"name": "Users",
-							"description": "Importing Users data from db"
-						},
-						{
-							"linkedService": {
-								"referenceName": "LS_jsonToDb",
-								"type": "LinkedServiceReference"
-							},
-							"name": "Expenses",
-							"description": "Importing Expenses data from db"
-						}
-					],
-					"sinks": [
-						{
-							"linkedService": {
-								"referenceName": "LS_jsonToDb",
-								"type": "LinkedServiceReference"
-							},
-							"name": "CleanedData",
-							"description": "LoadingCleanedUserDataIntoSqlDb"
-						},
-						{
-							"linkedService": {
-								"referenceName": "LS_jsonToDb",
-								"type": "LinkedServiceReference"
-							},
-							"name": "CleanedExpenseData",
-							"description": "Loading the cleaned expenses into db"
-						}
-					],
-					"transformations": [
-						{
-							"name": "RemovingEmptyRecords",
-							"description": "Removing Users whose id and email is null"
-						},
-						{
-							"name": "IdentifyingRedundantRows",
-							"description": "Removing Duplicate Users"
-						},
-						{
-							"name": "RemovingRedundantRows",
-							"description": "Removing the Repeated Users"
-						},
-						{
-							"name": "SelectingTheRequiredColumns",
-							"description": "selecting only the needed fields"
-						},
-						{
-							"name": "ChangingToAppropriateDataType",
-							"description": "Cast columns to appropriate types"
-						},
-						{
-							"name": "RemovingNullRecords",
-							"description": "Removing Expenses which does not have user id"
-						},
-						{
-							"name": "FindingRedundantRows",
-							"description": "Removing Duplicate Expenses"
-						},
-						{
-							"name": "RemovingDuplicateRows",
-							"description": "Removing Redundant Data"
-						},
-						{
-							"name": "SelectingNeededFields",
-							"description": "Selecting Only the Required Fields"
-						},
-						{
-							"name": "ChangingTheDataType"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          id as string,",
-						"          Email as string,",
-						"          Password as string,",
-						"          Balance as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'table',",
-						"     store: 'sqlserver',",
-						"     schemaName: 'staging',",
-						"     tableName: 'user',",
-						"     isolationLevel: 'READ_UNCOMMITTED') ~> Users",
-						"source(output(",
-						"          Id as string,",
-						"          userId as string,",
-						"          Category as string,",
-						"          Date as string,",
-						"          Description as string,",
-						"          Price as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'table',",
-						"     store: 'sqlserver',",
-						"     schemaName: 'staging',",
-						"     tableName: 'expenses',",
-						"     isolationLevel: 'READ_UNCOMMITTED') ~> Expenses",
-						"Users filter(!isNull(id)&&!isNull(Email)&&!isNull(Password)) ~> RemovingEmptyRecords",
-						"RemovingEmptyRecords window(over(id),",
-						"     asc(id, true),",
-						"     Rnk = rowNumber()) ~> IdentifyingRedundantRows",
-						"IdentifyingRedundantRows filter(Rnk==1) ~> RemovingRedundantRows",
-						"RemovingRedundantRows select(mapColumn(",
-						"          id,",
-						"          Email,",
-						"          Password,",
-						"          Balance",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> SelectingTheRequiredColumns",
-						"SelectingTheRequiredColumns cast(output(",
-						"          id as string,",
-						"          Email as string,",
-						"          Password as string,",
-						"          Balance as integer",
-						"     ),",
-						"     errors: true) ~> ChangingToAppropriateDataType",
-						"Expenses filter(!isNull(userId)) ~> RemovingNullRecords",
-						"RemovingNullRecords window(over(Id),",
-						"     asc(Id, true),",
-						"     Rnk = rowNumber()) ~> FindingRedundantRows",
-						"FindingRedundantRows filter(Rnk==1) ~> RemovingDuplicateRows",
-						"RemovingDuplicateRows select(mapColumn(",
-						"          Id,",
-						"          userId,",
-						"          Category,",
-						"          Date,",
-						"          Description,",
-						"          Price",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> SelectingNeededFields",
-						"SelectingNeededFields cast(output(",
-						"          Id as string,",
-						"          userId as string,",
-						"          Category as string,",
-						"          Date as string,",
-						"          Description as string,",
-						"          Price as integer",
-						"     ),",
-						"     errors: true) ~> ChangingTheDataType",
-						"ChangingToAppropriateDataType sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'table',",
-						"     store: 'sqlserver',",
-						"     schemaName: 'prep',",
-						"     tableName: 'User',",
-						"     insertable: true,",
-						"     updateable: false,",
-						"     deletable: false,",
-						"     upsertable: false,",
-						"     recreate: true,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedData",
-						"ChangingTheDataType sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'table',",
-						"     store: 'sqlserver',",
-						"     schemaName: 'prep',",
-						"     tableName: 'expenses',",
-						"     insertable: true,",
-						"     updateable: false,",
-						"     deletable: false,",
-						"     upsertable: false,",
-						"     recreate: true,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedExpenseData"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_jsonToDb')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/DF_Fact And Dim')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"folder": {
+					"name": "Ass1"
+				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
 					"sources": [
@@ -1112,13 +1020,814 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/PL_Reporting')]",
+			"name": "[concat(parameters('factoryName'), '/DF_DataCleaning')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "Ass1"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "Users",
+							"description": "Importing Users data from db"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "Expenses",
+							"description": "Importing Expenses data from db"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "CleanedData",
+							"description": "LoadingCleanedUserDataIntoSqlDb"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_jsonToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "CleanedExpenseData",
+							"description": "Loading the cleaned expenses into db"
+						}
+					],
+					"transformations": [
+						{
+							"name": "RemovingEmptyRecords",
+							"description": "Removing Users whose id and email is null"
+						},
+						{
+							"name": "IdentifyingRedundantRows",
+							"description": "Removing Duplicate Users"
+						},
+						{
+							"name": "RemovingRedundantRows",
+							"description": "Removing the Repeated Users"
+						},
+						{
+							"name": "SelectingTheRequiredColumns",
+							"description": "selecting only the needed fields"
+						},
+						{
+							"name": "ChangingToAppropriateDataType",
+							"description": "Cast columns to appropriate types"
+						},
+						{
+							"name": "RemovingNullRecords",
+							"description": "Removing Expenses which does not have user id"
+						},
+						{
+							"name": "FindingRedundantRows",
+							"description": "Removing Duplicate Expenses"
+						},
+						{
+							"name": "RemovingDuplicateRows",
+							"description": "Removing Redundant Data"
+						},
+						{
+							"name": "SelectingNeededFields",
+							"description": "Selecting Only the Required Fields"
+						},
+						{
+							"name": "ChangingTheDataType"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          id as string,",
+						"          Email as string,",
+						"          Password as string,",
+						"          Balance as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'staging',",
+						"     tableName: 'user',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> Users",
+						"source(output(",
+						"          Id as string,",
+						"          userId as string,",
+						"          Category as string,",
+						"          Date as string,",
+						"          Description as string,",
+						"          Price as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'staging',",
+						"     tableName: 'expenses',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> Expenses",
+						"Users filter(!isNull(id)&&!isNull(Email)&&!isNull(Password)) ~> RemovingEmptyRecords",
+						"RemovingEmptyRecords window(over(id),",
+						"     asc(id, true),",
+						"     Rnk = rowNumber()) ~> IdentifyingRedundantRows",
+						"IdentifyingRedundantRows filter(Rnk==1) ~> RemovingRedundantRows",
+						"RemovingRedundantRows select(mapColumn(",
+						"          id,",
+						"          Email,",
+						"          Password,",
+						"          Balance",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingTheRequiredColumns",
+						"SelectingTheRequiredColumns cast(output(",
+						"          id as string,",
+						"          Email as string,",
+						"          Password as string,",
+						"          Balance as integer",
+						"     ),",
+						"     errors: true) ~> ChangingToAppropriateDataType",
+						"Expenses filter(!isNull(userId)) ~> RemovingNullRecords",
+						"RemovingNullRecords window(over(Id),",
+						"     asc(Id, true),",
+						"     Rnk = rowNumber()) ~> FindingRedundantRows",
+						"FindingRedundantRows filter(Rnk==1) ~> RemovingDuplicateRows",
+						"RemovingDuplicateRows select(mapColumn(",
+						"          Id,",
+						"          userId,",
+						"          Category,",
+						"          Date,",
+						"          Description,",
+						"          Price",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingNeededFields",
+						"SelectingNeededFields cast(output(",
+						"          Id as string,",
+						"          userId as string,",
+						"          Category as string,",
+						"          Date as string,",
+						"          Description as string,",
+						"          Price as integer",
+						"     ),",
+						"     errors: true) ~> ChangingTheDataType",
+						"ChangingToAppropriateDataType sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'User',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedData",
+						"ChangingTheDataType sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'expenses',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedExpenseData"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_jsonToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_ScrappedData')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_ScrappedData_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_BlobToDb')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('LS_BlobToDb_properties_typeProperties_server')]",
+					"database": "[parameters('LS_BlobToDb_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('LS_BlobToDb_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('LS_BlobToDb_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Main Prod')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "DL_Prep To Reporting",
+						"name": "LoadMainProdDataIntoBlob",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "components",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Components",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "categoryName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CategoryName",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "seriesName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SeriesName",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "categoryCode",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CategoryCode",
+											"physicalType": "nvarchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_ScrappedData",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_BlobToDb",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Ass2"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_ScrappedData')]",
+				"[concat(variables('factoryId'), '/datasets/DS_BlobToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ScrappedData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ScrappedData",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Ass2"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "prod_data2.csv",
+						"container": "cr-de-miniproject"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "components",
+						"type": "String"
+					},
+					{
+						"name": "categoryName",
+						"type": "String"
+					},
+					{
+						"name": "seriesName",
+						"type": "String"
+					},
+					{
+						"name": "categoryCode",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ScrappedData')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_BlobToDb')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_BlobToDb",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Ass2"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "staging",
+					"table": "sub_prod"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_BlobToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_ScrappedDataCleaning')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "Ass2"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "MainProdData",
+							"description": "Taking the main prod data as source"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "SubProdData",
+							"description": "Taking the Sub prod data as source"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "CleanedMainProdData",
+							"description": "Loading Main Prod to Db"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "CleanedSubProdData",
+							"description": "Loading sub prod to db"
+						}
+					],
+					"transformations": [
+						{
+							"name": "RemovingDuplicateRows",
+							"description": "Removing Records having same category code and name"
+						},
+						{
+							"name": "RemovingNullRecords",
+							"description": "Removing records with no category name"
+						},
+						{
+							"name": "selectingtherequiredrows"
+						},
+						{
+							"name": "RemovingNullRows",
+							"description": "Removing records with null values"
+						},
+						{
+							"name": "ChangingTheDataTypes"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          Components as string,",
+						"          CategoryName as string,",
+						"          SeriesName as string,",
+						"          CategoryCode as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'staging',",
+						"     tableName: 'main_prod',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> MainProdData",
+						"source(output(",
+						"          {Department Code} as string,",
+						"          {Category Code} as string,",
+						"          {Category Name} as string,",
+						"          {Series Code} as string,",
+						"          {Series Name} as string,",
+						"          {Brand Code} as string,",
+						"          {Brand Name} as string,",
+						"          {Min Days To Ship} as string,",
+						"          {Max Days To Ship} as string,",
+						"          {Min Price} as string,",
+						"          {Max Price} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'staging',",
+						"     tableName: 'sub_prod',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> SubProdData",
+						"MainProdData aggregate(groupBy(CategoryCode = CategoryCode ,",
+						"          CategoryName),",
+						"     each(match(name!='CategoryCode' && name!=\"CategoryName\"), $$ = first($$))) ~> RemovingDuplicateRows",
+						"RemovingDuplicateRows filter(!isNull(CategoryCode)) ~> RemovingNullRecords",
+						"SubProdData select(mapColumn(",
+						"          DepartmentCode = {Department Code},",
+						"          CategoryCode = {Category Code},",
+						"          CategoryName = {Category Name},",
+						"          SeriesName = {Series Name},",
+						"          BrandCode = {Brand Code},",
+						"          BrandName = {Brand Name},",
+						"          {MinDaysTo Ship} = {Min Days To Ship},",
+						"          MaxDaysToShip = {Max Days To Ship},",
+						"          MinPrice = {Min Price},",
+						"          MaxPrice = {Max Price}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selectingtherequiredrows",
+						"selectingtherequiredrows filter(!isNull(DepartmentCode)&&!isNull(CategoryCode)&&!isNull(CategoryName)) ~> RemovingNullRows",
+						"RemovingNullRows cast(output(",
+						"          DepartmentCode as string,",
+						"          CategoryCode as string,",
+						"          CategoryName as string,",
+						"          SeriesName as string,",
+						"          BrandCode as string,",
+						"          BrandName as string,",
+						"          {MinDaysTo Ship} as integer,",
+						"          MaxDaysToShip as integer,",
+						"          MinPrice as integer,",
+						"          MaxPrice as integer",
+						"     ),",
+						"     errors: true) ~> ChangingTheDataTypes",
+						"RemovingNullRecords sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'main_prod',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedMainProdData",
+						"ChangingTheDataTypes sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'sub_prod',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CleanedSubProdData"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_BlobToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Sub Prod')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LoadingSubProdDataToBlob",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Department Code",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Department Code",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Category Code",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Category Code",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Category Name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Category Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Series Code",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Series Code",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Series Name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Series Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Brand Code",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Brand Code",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Brand Name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Brand Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Min Days To Ship",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Min Days To Ship",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Max Days To Ship",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Max Days To Ship",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Min Price",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Min Price",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Max Price",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Max Price",
+											"type": "String",
+											"physicalType": "nvarchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_ScrappedData",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_BlobToDb",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Ass2"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_ScrappedData')]",
+				"[concat(variables('factoryId'), '/datasets/DS_BlobToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Stage To Prep')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "MovingProductTablesToPrepLayer",
 						"type": "ExecuteDataFlow",
 						"dependsOn": [],
 						"policy": {
@@ -1131,16 +1840,14 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "DF_Fact And Dim",
+								"referenceName": "DF_ScrappedDataCleaning",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
-									"FactExpense": {},
-									"UserSourceTable": {},
-									"ExpenseTable": {},
-									"UserDimTable": {},
-									"CategoryDim": {},
-									"FactExpenseTable": {}
+									"MainProdData": {},
+									"SubProdData": {},
+									"CleanedMainProdData": {},
+									"CleanedSubProdData": {}
 								}
 							},
 							"staging": {},
@@ -1155,10 +1862,286 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
+				"folder": {
+					"name": "Ass2"
+				},
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/DF_Fact And Dim')]"
+				"[concat(variables('factoryId'), '/dataflows/DF_ScrappedDataCleaning')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_FactDimProducts')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "Ass2"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "MainProd"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "subProd"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "ProdDim",
+							"description": "Product Dimension Table"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "BrandDim",
+							"description": "Brand Dimension Table"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "ShippingDim"
+						},
+						{
+							"linkedService": {
+								"referenceName": "LS_BlobToDb",
+								"type": "LinkedServiceReference"
+							},
+							"name": "PriceDim"
+						}
+					],
+					"transformations": [
+						{
+							"name": "JoiningDeptAndSeriesData"
+						},
+						{
+							"name": "SelectTheRequiredFields"
+						},
+						{
+							"name": "GettingBrandDetails",
+							"description": "Joining two tables to get brand details"
+						},
+						{
+							"name": "SelectingBrand",
+							"description": "selecting the columns that specifies brand"
+						},
+						{
+							"name": "AvgShippingDays",
+							"description": "Derive Column Avg ShippingDays"
+						},
+						{
+							"name": "RequiredColumns",
+							"description": "selecting the required columns"
+						},
+						{
+							"name": "GroupByPrice",
+							"description": "Category with maximum price"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CategoryCode as string,",
+						"          CategoryName as string,",
+						"          Components as string,",
+						"          SeriesName as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'main_prod',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> MainProd",
+						"source(output(",
+						"          DepartmentCode as string,",
+						"          CategoryCode as string,",
+						"          CategoryName as string,",
+						"          SeriesName as string,",
+						"          BrandCode as string,",
+						"          BrandName as string,",
+						"          {MinDaysTo Ship} as integer,",
+						"          MaxDaysToShip as integer,",
+						"          MinPrice as integer,",
+						"          MaxPrice as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'prep',",
+						"     tableName: 'sub_prod',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> subProd",
+						"MainProd, subProd join(MainProd@CategoryCode == subProd@CategoryCode,",
+						"     joinType:'right',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoiningDeptAndSeriesData",
+						"JoiningDeptAndSeriesData select(mapColumn(",
+						"          CategoryCode = MainProd@CategoryCode,",
+						"          CategoryName = MainProd@CategoryName,",
+						"          DepartmentCode,",
+						"          SeriesName = subProd@SeriesName",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectTheRequiredFields",
+						"MainProd, subProd join(MainProd@CategoryCode == subProd@CategoryCode,",
+						"     joinType:'right',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> GettingBrandDetails",
+						"GettingBrandDetails select(mapColumn(",
+						"          CategoryName = MainProd@CategoryName,",
+						"          SeriesName = subProd@SeriesName,",
+						"          BrandCode,",
+						"          BrandName",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingBrand",
+						"subProd derive(shippingdays = toInteger((MaxDaysToShip+{MinDaysTo Ship})/2)) ~> AvgShippingDays",
+						"AvgShippingDays select(mapColumn(",
+						"          CategoryCode,",
+						"          CategoryName,",
+						"          SeriesName,",
+						"          Averageshippingdays = shippingdays",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> RequiredColumns",
+						"subProd aggregate(groupBy(CategoryName),",
+						"     MaxPrice = max(MaxPrice)) ~> GroupByPrice",
+						"SelectTheRequiredFields sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'reporting',",
+						"     tableName: 'ProdDim',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> ProdDim",
+						"SelectingBrand sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'reporting',",
+						"     tableName: 'BrandDim',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> BrandDim",
+						"RequiredColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'reporting',",
+						"     tableName: 'ShippingDim',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> ShippingDim",
+						"GroupByPrice sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'reporting',",
+						"     tableName: 'PriceDim',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     recreate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> PriceDim"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_BlobToDb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Prep To Report')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Reporting",
+						"description": "Moving Prod data To Reporting",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_FactDimProducts",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"MainProd": {},
+									"subProd": {},
+									"ProdDim": {},
+									"BrandDim": {},
+									"ShippingDim": {},
+									"PriceDim": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Ass2"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_FactDimProducts')]"
 			]
 		}
 	]
