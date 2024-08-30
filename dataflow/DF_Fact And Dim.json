@@ -1,6 +1,9 @@
 {
 	"name": "DF_Fact And Dim",
 	"properties": {
+		"folder": {
+			"name": "Ass1"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [

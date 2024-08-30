@@ -5,6 +5,9 @@
 			"referenceName": "LS_ScrappedData",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Ass2"
+		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {

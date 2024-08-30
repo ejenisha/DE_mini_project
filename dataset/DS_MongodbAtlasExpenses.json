@@ -5,6 +5,9 @@
 			"referenceName": "LS_MongodbAtlas",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Ass1"
+		},
 		"annotations": [],
 		"type": "MongoDbAtlasCollection",
 		"schema": [],

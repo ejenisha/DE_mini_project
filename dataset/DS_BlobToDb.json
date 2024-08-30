@@ -5,6 +5,9 @@
 			"referenceName": "LS_BlobToDb",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Ass2"
+		},
 		"annotations": [],
 		"type": "AzureSqlTable",
 		"schema": [],

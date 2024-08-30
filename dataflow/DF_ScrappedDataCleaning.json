@@ -1,6 +1,9 @@
 {
 	"name": "DF_ScrappedDataCleaning",
 	"properties": {
+		"folder": {
+			"name": "Ass2"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
@@ -29,6 +32,14 @@
 					},
 					"name": "CleanedMainProdData",
 					"description": "Loading Main Prod to Db"
+				},
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "CleanedSubProdData",
+					"description": "Loading sub prod to db"
 				}
 			],
 			"transformations": [
@@ -46,6 +57,9 @@
 				{
 					"name": "RemovingNullRows",
 					"description": "Removing records with null values"
+				},
+				{
+					"name": "ChangingTheDataTypes"
 				}
 			],
 			"scriptLines": [
@@ -101,6 +115,19 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> selectingtherequiredrows",
 				"selectingtherequiredrows filter(!isNull(DepartmentCode)&&!isNull(CategoryCode)&&!isNull(CategoryName)) ~> RemovingNullRows",
+				"RemovingNullRows cast(output(",
+				"          DepartmentCode as string,",
+				"          CategoryCode as string,",
+				"          CategoryName as string,",
+				"          SeriesName as string,",
+				"          BrandCode as string,",
+				"          BrandName as string,",
+				"          {MinDaysTo Ship} as integer,",
+				"          MaxDaysToShip as integer,",
+				"          MinPrice as integer,",
+				"          MaxPrice as integer",
+				"     ),",
+				"     errors: true) ~> ChangingTheDataTypes",
 				"RemovingNullRecords sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
@@ -114,7 +141,21 @@
 				"     recreate: true,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> CleanedMainProdData"
+				"     errorHandlingOption: 'stopOnFirstError') ~> CleanedMainProdData",
+				"ChangingTheDataTypes sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'prep',",
+				"     tableName: 'sub_prod',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> CleanedSubProdData"
 			]
 		}
 	}

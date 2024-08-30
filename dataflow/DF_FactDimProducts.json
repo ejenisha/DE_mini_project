@@ -1,0 +1,214 @@
+{
+	"name": "DF_FactDimProducts",
+	"properties": {
+		"folder": {
+			"name": "Ass2"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "MainProd"
+				},
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "subProd"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ProdDim",
+					"description": "Product Dimension Table"
+				},
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "BrandDim",
+					"description": "Brand Dimension Table"
+				},
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ShippingDim"
+				},
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "PriceDim"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JoiningDeptAndSeriesData"
+				},
+				{
+					"name": "SelectTheRequiredFields"
+				},
+				{
+					"name": "GettingBrandDetails",
+					"description": "Joining two tables to get brand details"
+				},
+				{
+					"name": "SelectingBrand",
+					"description": "selecting the columns that specifies brand"
+				},
+				{
+					"name": "AvgShippingDays",
+					"description": "Derive Column Avg ShippingDays"
+				},
+				{
+					"name": "RequiredColumns",
+					"description": "selecting the required columns"
+				},
+				{
+					"name": "GroupByPrice",
+					"description": "Category with maximum price"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CategoryCode as string,",
+				"          CategoryName as string,",
+				"          Components as string,",
+				"          SeriesName as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'prep',",
+				"     tableName: 'main_prod',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> MainProd",
+				"source(output(",
+				"          DepartmentCode as string,",
+				"          CategoryCode as string,",
+				"          CategoryName as string,",
+				"          SeriesName as string,",
+				"          BrandCode as string,",
+				"          BrandName as string,",
+				"          {MinDaysTo Ship} as integer,",
+				"          MaxDaysToShip as integer,",
+				"          MinPrice as integer,",
+				"          MaxPrice as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'prep',",
+				"     tableName: 'sub_prod',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> subProd",
+				"MainProd, subProd join(MainProd@CategoryCode == subProd@CategoryCode,",
+				"     joinType:'right',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoiningDeptAndSeriesData",
+				"JoiningDeptAndSeriesData select(mapColumn(",
+				"          CategoryCode = MainProd@CategoryCode,",
+				"          CategoryName = MainProd@CategoryName,",
+				"          DepartmentCode,",
+				"          SeriesName = subProd@SeriesName",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectTheRequiredFields",
+				"MainProd, subProd join(MainProd@CategoryCode == subProd@CategoryCode,",
+				"     joinType:'right',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> GettingBrandDetails",
+				"GettingBrandDetails select(mapColumn(",
+				"          CategoryName = MainProd@CategoryName,",
+				"          SeriesName = subProd@SeriesName,",
+				"          BrandCode,",
+				"          BrandName",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectingBrand",
+				"subProd derive(shippingdays = toInteger((MaxDaysToShip+{MinDaysTo Ship})/2)) ~> AvgShippingDays",
+				"AvgShippingDays select(mapColumn(",
+				"          CategoryCode,",
+				"          CategoryName,",
+				"          SeriesName,",
+				"          Averageshippingdays = shippingdays",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> RequiredColumns",
+				"subProd aggregate(groupBy(CategoryName),",
+				"     MaxPrice = max(MaxPrice)) ~> GroupByPrice",
+				"SelectTheRequiredFields sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'reporting',",
+				"     tableName: 'ProdDim',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> ProdDim",
+				"SelectingBrand sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'reporting',",
+				"     tableName: 'BrandDim',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> BrandDim",
+				"RequiredColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'reporting',",
+				"     tableName: 'ShippingDim',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> ShippingDim",
+				"GroupByPrice sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'reporting',",
+				"     tableName: 'PriceDim',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> PriceDim"
+			]
+		}
+	}
+}

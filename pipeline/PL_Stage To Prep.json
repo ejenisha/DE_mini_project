@@ -1,10 +1,9 @@
 {
-	"name": "PL_Staging To Prep",
+	"name": "PL_Stage To Prep",
 	"properties": {
 		"activities": [
 			{
-				"name": "Move Data From Stage To Prep",
-				"description": "Moving data from staging to prep layer",
+				"name": "MovingProductTablesToPrepLayer",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -17,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "DF_DataCleaning",
+						"referenceName": "DF_ScrappedDataCleaning",
 						"type": "DataFlowReference"
 					},
 					"compute": {
@@ -29,7 +28,7 @@
 			}
 		],
 		"folder": {
-			"name": "Ass1"
+			"name": "Ass2"
 		},
 		"annotations": []
 	}

@@ -1,10 +1,10 @@
 {
-	"name": "PL_Staging To Prep",
+	"name": "PL_Prep To Report",
 	"properties": {
 		"activities": [
 			{
-				"name": "Move Data From Stage To Prep",
-				"description": "Moving data from staging to prep layer",
+				"name": "Reporting",
+				"description": "Moving Prod data To Reporting",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -17,7 +17,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "DF_DataCleaning",
+						"referenceName": "DF_FactDimProducts",
 						"type": "DataFlowReference"
 					},
 					"compute": {
@@ -29,7 +29,7 @@
 			}
 		],
 		"folder": {
-			"name": "Ass1"
+			"name": "Ass2"
 		},
 		"annotations": []
 	}

@@ -1,6 +1,9 @@
 {
-	"name": "DL_DataCleaning",
+	"name": "DF_DataCleaning",
 	"properties": {
+		"folder": {
+			"name": "Ass1"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [

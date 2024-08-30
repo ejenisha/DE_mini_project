@@ -5,6 +5,9 @@
 			"referenceName": "LS_jsonToDb",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Ass1"
+		},
 		"annotations": [],
 		"type": "AzureSqlTable",
 		"schema": [
