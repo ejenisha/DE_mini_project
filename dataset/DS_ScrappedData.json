@@ -1,0 +1,40 @@
+{
+	"name": "DS_ScrappedData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ScrappedData",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "prod_data2.csv",
+				"container": "cr-de-miniproject"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "components",
+				"type": "String"
+			},
+			{
+				"name": "categoryName",
+				"type": "String"
+			},
+			{
+				"name": "seriesName",
+				"type": "String"
+			},
+			{
+				"name": "categoryCode",
+				"type": "String"
+			}
+		]
+	}
+}

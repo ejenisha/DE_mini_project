@@ -1,0 +1,16 @@
+{
+	"name": "DS_BlobToDb",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_BlobToDb",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "staging",
+			"table": "sub_prod"
+		}
+	}
+}

@@ -1,0 +1,121 @@
+{
+	"name": "DF_ScrappedDataCleaning",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "MainProdData",
+					"description": "Taking the main prod data as source"
+				},
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SubProdData",
+					"description": "Taking the Sub prod data as source"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "LS_BlobToDb",
+						"type": "LinkedServiceReference"
+					},
+					"name": "CleanedMainProdData",
+					"description": "Loading Main Prod to Db"
+				}
+			],
+			"transformations": [
+				{
+					"name": "RemovingDuplicateRows",
+					"description": "Removing Records having same category code and name"
+				},
+				{
+					"name": "RemovingNullRecords",
+					"description": "Removing records with no category name"
+				},
+				{
+					"name": "selectingtherequiredrows"
+				},
+				{
+					"name": "RemovingNullRows",
+					"description": "Removing records with null values"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          Components as string,",
+				"          CategoryName as string,",
+				"          SeriesName as string,",
+				"          CategoryCode as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'staging',",
+				"     tableName: 'main_prod',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> MainProdData",
+				"source(output(",
+				"          {Department Code} as string,",
+				"          {Category Code} as string,",
+				"          {Category Name} as string,",
+				"          {Series Code} as string,",
+				"          {Series Name} as string,",
+				"          {Brand Code} as string,",
+				"          {Brand Name} as string,",
+				"          {Min Days To Ship} as string,",
+				"          {Max Days To Ship} as string,",
+				"          {Min Price} as string,",
+				"          {Max Price} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'staging',",
+				"     tableName: 'sub_prod',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> SubProdData",
+				"MainProdData aggregate(groupBy(CategoryCode = CategoryCode ,",
+				"          CategoryName),",
+				"     each(match(name!='CategoryCode' && name!=\"CategoryName\"), $$ = first($$))) ~> RemovingDuplicateRows",
+				"RemovingDuplicateRows filter(!isNull(CategoryCode)) ~> RemovingNullRecords",
+				"SubProdData select(mapColumn(",
+				"          DepartmentCode = {Department Code},",
+				"          CategoryCode = {Category Code},",
+				"          CategoryName = {Category Name},",
+				"          SeriesName = {Series Name},",
+				"          BrandCode = {Brand Code},",
+				"          BrandName = {Brand Name},",
+				"          {MinDaysTo Ship} = {Min Days To Ship},",
+				"          MaxDaysToShip = {Max Days To Ship},",
+				"          MinPrice = {Min Price},",
+				"          MaxPrice = {Max Price}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectingtherequiredrows",
+				"selectingtherequiredrows filter(!isNull(DepartmentCode)&&!isNull(CategoryCode)&&!isNull(CategoryName)) ~> RemovingNullRows",
+				"RemovingNullRecords sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'prep',",
+				"     tableName: 'main_prod',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> CleanedMainProdData"
+			]
+		}
+	}
+}
